@@ -1,7 +1,24 @@
 // app.js
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-app.js";
+import { getDatabase, ref, onValue, set, remove, update } from "https://www.gstatic.com/firebasejs/10.9.0/firebase-database.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyCGpCAa6_gUB9SAgRXiBQ2dXZidvNbf6Rg",
+  authDomain: "kovatasktracker.firebaseapp.com",
+  databaseURL: "https://kovatasktracker-default-rtdb.europe-west1.firebasedatabase.app",
+  projectId: "kovatasktracker",
+  storageBucket: "kovatasktracker.firebasestorage.app",
+  messagingSenderId: "1062116112198",
+  appId: "1:1062116112198:web:a135bfe5d1be7421cc5747",
+  measurementId: "G-ED768L7X79"
+};
+
+// Initialize Firebase
+const app = initializeApp(firebaseConfig);
+const db = getDatabase(app);
 
 // State
-let tasks = JSON.parse(localStorage.getItem('kovaTasks')) || [];
+let tasks = [];
 let isAdmin = sessionStorage.getItem('kovaAdmin') === 'true';
 
 // Currently selected task for claiming
@@ -32,15 +49,21 @@ const counts = {
 // Initialization
 function init() {
     updateAuthUI();
-    renderTasks();
     setupEventListeners();
+    
+    // Setup Firebase Listener
+    const tasksRef = ref(db, 'tasks');
+    onValue(tasksRef, (snapshot) => {
+        const data = snapshot.val();
+        tasks = [];
+        if (data) {
+            tasks = Object.values(data);
+        }
+        renderTasks();
+    });
 }
 
 // Helpers
-function saveTasks() {
-    localStorage.setItem('kovaTasks', JSON.stringify(tasks));
-}
-
 function updateAuthUI() {
     if (isAdmin) {
         adminLoginBtn.classList.add('hidden');
@@ -128,7 +151,7 @@ function renderTasks() {
 // Escaping utility
 function escapeHtml(unsafe) {
     if (!unsafe) return '';
-    return unsafe
+    return String(unsafe)
          .replace(/&/g, "&amp;")
          .replace(/</g, "&lt;")
          .replace(/>/g, "&gt;")
@@ -190,8 +213,9 @@ function setupEventListeners() {
 
         if (title.trim() === '') return;
 
+        const id = Date.now().toString();
         const newTask = {
-            id: Date.now().toString(),
+            id: id,
             title: title,
             description: desc,
             priority: priority,
@@ -203,9 +227,7 @@ function setupEventListeners() {
             colorMode: Math.floor(Math.random() * 4) + 1 // 1 to 4 for random post-it colors
         };
 
-        tasks.push(newTask);
-        saveTasks();
-        renderTasks();
+        set(ref(db, 'tasks/' + id), newTask);
         addTaskModal.classList.add('hidden');
     });
 
@@ -221,7 +243,7 @@ function setupEventListeners() {
                 
                 claimTaskModal.classList.remove('hidden');
                 const nameInput = document.getElementById('assignee-name');
-                nameInput.value = task.assignee || '';
+                nameInput.value = task ? (task.assignee || '') : '';
                 nameInput.focus();
             }
             return;
@@ -251,11 +273,9 @@ function setupEventListeners() {
             if (card) {
                 const taskId = card.dataset.id;
                 const field = e.target.dataset.field;
-                const taskIndex = tasks.findIndex(t => t.id === taskId);
-                if (taskIndex !== -1) {
-                    tasks[taskIndex][field] = e.target.checked;
-                    saveTasks();
-                }
+                update(ref(db, 'tasks/' + taskId), {
+                    [field]: e.target.checked
+                });
             }
             return;
         }
@@ -268,13 +288,9 @@ function setupEventListeners() {
             if (card) {
                 const taskId = card.dataset.id;
                 const newPriority = moveBtn.dataset.target;
-                const taskIndex = tasks.findIndex(t => t.id === taskId);
-                
-                if (taskIndex !== -1 && tasks[taskIndex].priority !== newPriority) {
-                    tasks[taskIndex].priority = newPriority;
-                    saveTasks();
-                    renderTasks();
-                }
+                update(ref(db, 'tasks/' + taskId), {
+                    priority: newPriority
+                });
             }
             return;
         }
@@ -287,9 +303,7 @@ function setupEventListeners() {
                 const card = deleteBtn.closest('.task-card');
                 if (card) {
                     const taskId = card.dataset.id;
-                    tasks = tasks.filter(t => t.id !== taskId);
-                    saveTasks();
-                    renderTasks();
+                    remove(ref(db, 'tasks/' + taskId));
                 }
             }
             return;
@@ -297,14 +311,13 @@ function setupEventListeners() {
     });
 
     // Delegated event for input change (Version)
-    document.querySelector('.dashboard-board').addEventListener('input', (e) => {
+    // Use 'change' instead of 'input' for Firebase to avoid writing to DB on every keystroke
+    document.querySelector('.dashboard-board').addEventListener('change', (e) => {
         if (e.target.classList.contains('version-input')) {
             const taskId = e.target.dataset.id;
-            const taskIndex = tasks.findIndex(t => t.id === taskId);
-            if (taskIndex !== -1) {
-                tasks[taskIndex].version = e.target.value;
-                saveTasks();
-            }
+            update(ref(db, 'tasks/' + taskId), {
+                version: e.target.value
+            });
         }
     });
 
@@ -317,14 +330,12 @@ function setupEventListeners() {
     document.getElementById('submit-claim-btn').addEventListener('click', () => {
         const name = document.getElementById('assignee-name').value;
         if (currentClaimTaskId && name.trim() !== '') {
-            const taskIndex = tasks.findIndex(t => t.id === currentClaimTaskId);
-            if (taskIndex !== -1) {
-                tasks[taskIndex].assignee = name.trim();
-                saveTasks();
-                renderTasks();
+            update(ref(db, 'tasks/' + currentClaimTaskId), {
+                assignee: name.trim()
+            }).then(() => {
                 claimTaskModal.classList.add('hidden');
                 currentClaimTaskId = null;
-            }
+            });
         }
     });
 }
