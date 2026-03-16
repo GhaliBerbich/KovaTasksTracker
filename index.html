@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Task Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+    <!-- Google Fonts for modern typography and handwritten text -->
+    <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@400..700&family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <header class="app-header">
+        <div class="header-content">
+            <h1>Task Dashboard</h1>
+            <div class="admin-controls">
+                <button id="admin-login-btn" class="btn">Admin Login</button>
+                <button id="admin-logout-btn" class="btn hidden">Logout</button>
+                <button id="add-task-btn" class="btn btn-primary hidden"><i class="fa-solid fa-plus"></i> Add New Task</button>
+            </div>
+        </div>
+    </header>
+
+    <main class="dashboard-board">
+        <div class="priority-column high-priority" id="col-high">
+            <div class="column-header">
+                <h2>High Priority</h2>
+                <span class="task-count" id="count-high">0</span>
+            </div>
+            <div class="task-list" id="list-high" data-priority="high">
+                <!-- Tasks will be injected here -->
+            </div>
+        </div>
+
+        <div class="priority-column medium-priority" id="col-medium">
+            <div class="column-header">
+                <h2>Medium Priority</h2>
+                <span class="task-count" id="count-medium">0</span>
+            </div>
+            <div class="task-list" id="list-medium" data-priority="medium">
+                <!-- Tasks will be injected here -->
+            </div>
+        </div>
+
+        <div class="priority-column low-priority" id="col-low">
+            <div class="column-header">
+                <h2>Low Priority</h2>
+                <span class="task-count" id="count-low">0</span>
+            </div>
+            <div class="task-list" id="list-low" data-priority="low">
+                <!-- Tasks will be injected here -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Modals -->
+    <!-- Admin Login Modal -->
+    <div id="admin-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-btn" id="close-admin-modal">&times;</span>
+            <h2>Admin Login</h2>
+            <div class="form-group">
+                <label for="admin-password">Password</label>
+                <input type="password" id="admin-password" placeholder="Enter admin password">
+                <p id="admin-error" class="error-msg hidden">Incorrect password.</p>
+            </div>
+            <button id="submit-admin-btn" class="btn btn-primary">Login</button>
+        </div>
+    </div>
+
+    <!-- Add Task Modal (Admin Only) -->
+    <div id="add-task-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-btn" id="close-add-modal">&times;</span>
+            <h2>Create New Task</h2>
+            <div class="form-group">
+                <label for="new-task-title">Task Title</label>
+                <input type="text" id="new-task-title" placeholder="E.g., Update navigation bar" required>
+            </div>
+            <div class="form-group">
+                <label for="new-task-desc">Description</label>
+                <textarea id="new-task-desc" placeholder="Details about the task..."></textarea>
+            </div>
+            <div class="form-group">
+                <label for="new-task-priority">Priority</label>
+                <select id="new-task-priority">
+                    <option value="high">High</option>
+                    <option value="medium" selected>Medium</option>
+                    <option value="low">Low</option>
+                </select>
+            </div>
+            <button id="submit-task-btn" class="btn btn-primary">Add Task</button>
+        </div>
+    </div>
+
+    <!-- Claim Task Modal -->
+    <div id="claim-task-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="close-btn" id="close-claim-modal">&times;</span>
+            <h2>Claim Task</h2>
+            <p>Enter your name to claim this task.</p>
+            <div class="form-group">
+                <label for="assignee-name">Your Name</label>
+                <input type="text" id="assignee-name" placeholder="E.g., John Doe" required>
+            </div>
+            <button id="submit-claim-btn" class="btn btn-primary">Claim Task</button>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+</html>
